@@ -33,7 +33,9 @@ head(activity)
 Extraction of times from intervals.
 
 ```r
+# returns a character vector containing times formatted with 4 digits.
 intervals_to_times <- sprintf("%04d", activity$interval)
+# replacement of time column with "dd:dd" pattern. Convertion to factor too.
 activity$time <- as.factor(gsub("(\\d{2})(\\d{2})","\\1:\\2", intervals_to_times))
 head(activity)
 ```
@@ -51,6 +53,7 @@ head(activity)
 Preprocesing the data and first approaching plot.
 
 ```r
+# add all steps of each day.
 totalStepsByDay <- aggregate(steps ~ date, data=activity, sum, na.rm=TRUE)
 head(totalStepsByDay)
 ```
@@ -66,6 +69,7 @@ head(totalStepsByDay)
 ```
 
 ```r
+# plot with bars for better understanding of data.
 days <- totalStepsByDay[,1]
 steps <- totalStepsByDay[,2]
 ggplot(totalStepsByDay) + 
@@ -107,6 +111,7 @@ median(totalStepsByDay$steps)
 Second plot showing the reported mean.
 
 ```r
+# for better clarity
 meanStepsByDay <- mean(totalStepsByDay$steps)
 ggplot(totalStepsByDay, aes(x=steps)) +  
   geom_histogram(colour="black", fill="yellow", binwidth=5000) +  
@@ -122,6 +127,7 @@ ggplot(totalStepsByDay, aes(x=steps)) +
 Preparing and viewing the data.
 
 ```r
+# steps by times.The mean.
 meanStepsByInterval <- aggregate(activity$steps ~ activity$time, data=activity, mean,
                                  na.rm=TRUE)
 head(meanStepsByInterval)
@@ -225,10 +231,13 @@ c(MissingValues_Total=sum(is.na(activity)),
 Filling the missing values with the 5 minutes interval mean.
 
 ```r
+# steps by intervals.The mean.
 meanSteps <- aggregate(steps ~ interval, data=activity, mean)
+# container for recalculated steps.
 filledNAs <- numeric()
 for (i in 1:nrow(activity)) {
     item <- activity[i, ]
+    # when missing value replace with the interval mean.
     if (is.na(item$steps)) {
         steps <- subset(meanSteps, interval==item$interval)$steps
     } else {
@@ -242,6 +251,7 @@ Creating the new Dataset without missing values.
 
 ```r
 newActivity <- activity
+# replace with recalculated steps.
 newActivity$steps <- filledNAs
 head(newActivity)
 ```
@@ -273,8 +283,9 @@ tail(newActivity)
 Histogram with the total number of steps taken each day without missings values.
 
 ```r
-StepsTotal2 <- aggregate(steps ~ date, data=newActivity, sum, na.rm=TRUE)
-hist(StepsTotal2$steps, main="total number of steps taken each day", xlab="steps",
+# add all steps of each day. Recalculated steps.
+totalSteps <- aggregate(steps ~ date, data=newActivity, sum, na.rm=TRUE)
+hist(totalSteps$steps, main="total number of steps taken each day", xlab="steps",
      col="yellow")
 ```
 
@@ -283,7 +294,7 @@ hist(StepsTotal2$steps, main="total number of steps taken each day", xlab="steps
 Calculation and information of the mean and median total number of steps taken per day.
 
 ```r
-c(New_Mean_is=mean(StepsTotal2$steps))
+c(New_Mean_is=mean(totalSteps$steps))
 ```
 
 ```
@@ -292,7 +303,7 @@ c(New_Mean_is=mean(StepsTotal2$steps))
 ```
 
 ```r
-c(New_Median_is=median(StepsTotal2$steps))
+c(New_Median_is=median(totalSteps$steps))
 ```
 
 ```
@@ -308,7 +319,9 @@ the mean and the median are equal now.
 Preparing the data.
 
 ```r
+# converts date column to Date type with format.
 activity$date <- as.Date(activity$date, "%Y-%m-%d")
+# extract names of the week days.
 day <- weekdays(activity$date)
 head(day)
 ```
@@ -321,6 +334,7 @@ Comment, my system has Spanish language.
 This is a simple iteration to percolate weekdays from weekends
 
 ```r
+# determines for each day whether is a weekend day or not.
 daytype <- vector()
 for (i in 1:nrow(activity)) {
     if (day[i]=="sábado") {
@@ -343,6 +357,7 @@ activity$daytype <- factor(activity$daytype)
 Plotting differences in activity patterns between weekdays and weekends.
 
 ```r
+# groups the data by the day type.
 meanInterval <- aggregate(steps ~ interval + daytype, data=activity, mean)
 xyplot(steps ~ interval | daytype, meanInterval, type="l", layout=c(1, 2), 
     xlab="Interval", ylab="Number of steps")

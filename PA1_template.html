@@ -209,7 +209,9 @@ head(activity)
 
 <p>Extraction of times from intervals.</p>
 
-<pre><code class="r">intervals_to_times &lt;- sprintf(&quot;%04d&quot;, activity$interval)
+<pre><code class="r"># returns a character vector containing times formatted with 4 digits.
+intervals_to_times &lt;- sprintf(&quot;%04d&quot;, activity$interval)
+# replacement of time column with &quot;dd:dd&quot; pattern. Convertion to factor too.
 activity$time &lt;- as.factor(gsub(&quot;(\\d{2})(\\d{2})&quot;,&quot;\\1:\\2&quot;, intervals_to_times))
 head(activity)
 </code></pre>
@@ -225,7 +227,8 @@ head(activity)
 
 <p>Preprocesing the data and first approaching plot.</p>
 
-<pre><code class="r">totalStepsByDay &lt;- aggregate(steps ~ date, data=activity, sum, na.rm=TRUE)
+<pre><code class="r"># add all steps of each day.
+totalStepsByDay &lt;- aggregate(steps ~ date, data=activity, sum, na.rm=TRUE)
 head(totalStepsByDay)
 </code></pre>
 
@@ -238,7 +241,8 @@ head(totalStepsByDay)
 ## 6 2012-10-07 11015
 </code></pre>
 
-<pre><code class="r">days &lt;- totalStepsByDay[,1]
+<pre><code class="r"># plot with bars for better understanding of data.
+days &lt;- totalStepsByDay[,1]
 steps &lt;- totalStepsByDay[,2]
 ggplot(totalStepsByDay) + 
   geom_bar(aes(x=days, y=steps), fill=&quot;yellow&quot;,color=&quot;black&quot;, binwidth=5000, stat=&quot;identity&quot;) +
@@ -271,7 +275,8 @@ ggplot(totalStepsByDay) +
 
 <p>Second plot showing the reported mean.</p>
 
-<pre><code class="r">meanStepsByDay &lt;- mean(totalStepsByDay$steps)
+<pre><code class="r"># for better clarity
+meanStepsByDay &lt;- mean(totalStepsByDay$steps)
 ggplot(totalStepsByDay, aes(x=steps)) +  
   geom_histogram(colour=&quot;black&quot;, fill=&quot;yellow&quot;, binwidth=5000) +  
   geom_vline(aes(xintercept=meanStepsByDay, color=&quot;Mean&quot;), size=1, show_guide=T) +  
@@ -285,7 +290,8 @@ ggplot(totalStepsByDay, aes(x=steps)) +
 
 <p>Preparing and viewing the data.</p>
 
-<pre><code class="r">meanStepsByInterval &lt;- aggregate(activity$steps ~ activity$time, data=activity, mean,
+<pre><code class="r"># steps by times.The mean.
+meanStepsByInterval &lt;- aggregate(activity$steps ~ activity$time, data=activity, mean,
                                  na.rm=TRUE)
 head(meanStepsByInterval)
 </code></pre>
@@ -375,10 +381,13 @@ Only missings values located in steps column.</p>
 
 <p>Filling the missing values with the 5 minutes interval mean.</p>
 
-<pre><code class="r">meanSteps &lt;- aggregate(steps ~ interval, data=activity, mean)
+<pre><code class="r"># steps by intervals.The mean.
+meanSteps &lt;- aggregate(steps ~ interval, data=activity, mean)
+# container for recalculated steps.
 filledNAs &lt;- numeric()
 for (i in 1:nrow(activity)) {
     item &lt;- activity[i, ]
+    # when missing value replace with the interval mean.
     if (is.na(item$steps)) {
         steps &lt;- subset(meanSteps, interval==item$interval)$steps
     } else {
@@ -391,6 +400,7 @@ for (i in 1:nrow(activity)) {
 <p>Creating the new Dataset without missing values.</p>
 
 <pre><code class="r">newActivity &lt;- activity
+# replace with recalculated steps.
 newActivity$steps &lt;- filledNAs
 head(newActivity)
 </code></pre>
@@ -418,8 +428,9 @@ head(newActivity)
 
 <p>Histogram with the total number of steps taken each day without missings values.</p>
 
-<pre><code class="r">StepsTotal2 &lt;- aggregate(steps ~ date, data=newActivity, sum, na.rm=TRUE)
-hist(StepsTotal2$steps, main=&quot;total number of steps taken each day&quot;, xlab=&quot;steps&quot;,
+<pre><code class="r"># add all steps of each day. Recalculated steps.
+totalSteps &lt;- aggregate(steps ~ date, data=newActivity, sum, na.rm=TRUE)
+hist(totalSteps$steps, main=&quot;total number of steps taken each day&quot;, xlab=&quot;steps&quot;,
      col=&quot;yellow&quot;)
 </code></pre>
 
@@ -427,14 +438,14 @@ hist(StepsTotal2$steps, main=&quot;total number of steps taken each day&quot;, x
 
 <p>Calculation and information of the mean and median total number of steps taken per day.</p>
 
-<pre><code class="r">c(New_Mean_is=mean(StepsTotal2$steps))
+<pre><code class="r">c(New_Mean_is=mean(totalSteps$steps))
 </code></pre>
 
 <pre><code>## New_Mean_is 
 ##       10766
 </code></pre>
 
-<pre><code class="r">c(New_Median_is=median(StepsTotal2$steps))
+<pre><code class="r">c(New_Median_is=median(totalSteps$steps))
 </code></pre>
 
 <pre><code>## New_Median_is 
@@ -448,7 +459,9 @@ the mean and the median are equal now.</p>
 
 <p>Preparing the data.</p>
 
-<pre><code class="r">activity$date &lt;- as.Date(activity$date, &quot;%Y-%m-%d&quot;)
+<pre><code class="r"># converts date column to Date type with format.
+activity$date &lt;- as.Date(activity$date, &quot;%Y-%m-%d&quot;)
+# extract names of the week days.
 day &lt;- weekdays(activity$date)
 head(day)
 </code></pre>
@@ -460,7 +473,8 @@ head(day)
 
 <p>This is a simple iteration to percolate weekdays from weekends</p>
 
-<pre><code class="r">daytype &lt;- vector()
+<pre><code class="r"># determines for each day whether is a weekend day or not.
+daytype &lt;- vector()
 for (i in 1:nrow(activity)) {
     if (day[i]==&quot;sábado&quot;) {
         daytype[i] &lt;- &quot;Weekend&quot;
@@ -480,7 +494,8 @@ activity$daytype &lt;- factor(activity$daytype)
 
 <p>Plotting differences in activity patterns between weekdays and weekends.</p>
 
-<pre><code class="r">meanInterval &lt;- aggregate(steps ~ interval + daytype, data=activity, mean)
+<pre><code class="r"># groups the data by the day type.
+meanInterval &lt;- aggregate(steps ~ interval + daytype, data=activity, mean)
 xyplot(steps ~ interval | daytype, meanInterval, type=&quot;l&quot;, layout=c(1, 2), 
     xlab=&quot;Interval&quot;, ylab=&quot;Number of steps&quot;)
 </code></pre>
